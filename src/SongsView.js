@@ -17,11 +17,11 @@ class ExportButton extends React.Component{
   constructor(props){
     super(props);
     this.logoUrls = {
-      "spotify":"/logos/spotify.png",
-      "download":"/logos/download.png", // TODO
-      "soundcloud":"/logos/soundcloud.png", 
-      "youtube":"/logos/youtube.png",
-      "apple":"/logos/apple.svg", // TODO
+      "spotify":"logos/spotify.png",
+      "download":"logos/download.png", // TODO
+      "soundcloud":"logos/soundcloud.png", 
+      "youtube":"logos/youtube.png",
+      "apple":"logos/apple.svg", // TODO
     }
     this.logoMult = 15;
     this.logoSizes = {

@@ -21,7 +21,7 @@ class PlaylistItem extends React.Component{
     this.state = {
       name: props.name,
       songsNum: "#",
-      img: "/loading.svg",
+      img: "loading.svg",
       extra:false,
     }
 
