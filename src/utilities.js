@@ -15,7 +15,8 @@ function getQueryVariable(query, variable) {
 
 
 // cost serverUrl = "http://192.168.43.62:3003"; // hotspot
-const serverUrl = "http://10.1.1.193:3003"; // home
+// const serverUrl = "http://10.1.1.193:3003"; // home
+const serverUrl = "https://sheltered-caverns-34537.herokuapp.com/"; // heroku
 
 
 
