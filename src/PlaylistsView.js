@@ -7,9 +7,20 @@ const axios = require('axios'); // dont know difference between require and impo
 class PlaylistItemExtra extends React.Component{
   render(){
     console.log("rendered extra");
+    let maxHeight = "0";
+    if(this.props.show){
+      maxHeight = "200px";
+    }else{
+      if(this.props.hovering){
+        maxHeight = "20px";
+      }
+    }
+
     return (
-      <div className="playlistItemExtra">
-        <p>penis</p>
+      <div style={{maxHeight:maxHeight}} className="playlistItemExtra">
+        <div className="playlistItemExtraInner">
+          <p className="playlistItemText">penis</p>
+        </div>
       </div>
     )
   }
@@ -23,6 +34,7 @@ class PlaylistItem extends React.Component{
       songsNum: "#",
       img: "loading.svg",
       extra:false,
+      hover:false,
     }
 
     this.decorate = this.decorate.bind(this);
@@ -78,13 +90,15 @@ class PlaylistItem extends React.Component{
     }
   }
   render(){
-    let extraInfo = "";
-    if(this.state.extra){
-      extraInfo = (<PlaylistItemExtra/>);
-    }
+    const setHover = (s)=>{this.setState({hovering:s})};
+
     return (
-      <div className="playlistItemOuter">
-        <div className={`playlistItem ${this.props.platform}Border`} onClick={this.toggle}>
+      <div className="playlistItemOuter" onClick={this.toggle}>
+        <div 
+          className={`playlistItem ${this.props.platform}Border`}
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+        >
           <div className="playlistItemMain">
             <img src={this.state.img} className="playlistItemImage" alt=""></img>
             <div className="playlistItemContent">
@@ -98,15 +112,14 @@ class PlaylistItem extends React.Component{
             </button>
           </div>
         </div>
-        {extraInfo}
+        <PlaylistItemExtra hovering={this.state.hovering} show={this.state.extra} info={{data:"uhhhh"}}/>
       </div>
     )
   }
   toggle(){
     console.log("toggled", this);
     console.log(this.state.extra, !this.state.extra);
-    const newState = !this.state.extra;
-    this.setState({extra: newState});
+    this.setState({extra: !this.state.extra});
   }
 }
 
@@ -133,10 +146,15 @@ class PlaylistsView extends React.Component{
       />;
     });
 
+    let helpStyles = this.props.highlightHelp?"#666":"#ccc";
+
     return (
       <div className="halfDiv" id="playlistViewContainer">
         <div id="playlistSearchContainer" className="">
-          <p id="playlistHelp" onClick={this.props.showHelp}>Help</p>
+          <p 
+            className={this.props.highlightHelp?"playlistHelpHighlight":""}
+            id="playlistHelp" onClick={this.props.showHelp}>Help</p>
+
           <input
             id="playlistSearch"
             type="text"
@@ -158,7 +176,6 @@ class PlaylistsView extends React.Component{
     )
   }
   componentDidUpdate(){
-    console.log("added scroll");
     Scrollbar.init(
       document.getElementById('playlistsContainer'), {
       plugins: {

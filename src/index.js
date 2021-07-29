@@ -31,7 +31,22 @@ class Main extends React.Component{
       exporting:this.exporting,
       mergeType:"Any",
       helping:false,
+      highlightingHelp:false,
+      helpPage:0,
     }
+
+    const needsHelp = ()=>{
+      // if the user hasnt added a playlist after some seconds
+      // highlight the help button
+      console.log("highlighted help");
+      if(this.state.playlists.length === 0 && this.state.helping === false){
+        this.setState({highlightingHelp:true});
+      }
+    }
+    this.interactTimeout = setTimeout(needsHelp, 5000);
+
+    this.helpPageSelectorX = 0;
+    this.helpPageSelectorW = 
 
     this.addSongs = this.addSongs.bind(this); 
     this.addPlaylist = this.addPlaylist.bind(this);
@@ -47,7 +62,31 @@ class Main extends React.Component{
     // callback used by SongsView to set the merge type state
     const setMergeType = type=>{this.setState({mergeType:type})}
 
-    const toggleHelp = ()=>{this.setState({helping:!this.state.helping})};
+    const toggleHelp = ()=>{this.setState({helping:!this.state.helping, highlightingHelp:false})};
+
+    const setHelpPage = (e, num)=>{
+      this.helpPageSelectorW=e.target.offsetWidth;
+      this.helpPageSelectorX=e.target.offsetLeft;
+      this.setState({helpPage:num})
+    };
+
+    const helpPagesButtonInfo = [
+      {text:"Spotify"},
+      {text:"Youtube"},
+      {text:"Apple Music"},
+    ]
+    const helpPagesButtons = helpPagesButtonInfo.map((item, idx)=>{
+      let classNames = "helpPlatformBarItem noselect "
+      if(idx == this.state.helpPage){
+        classNames += "helpPlatformBarButtonSelected"
+      }
+      return <span
+        key={idx}
+        // style={{backgroundColor:(idx===this.state.helpPage)?"#333":"#222"}}
+        className={classNames}
+        onClick={e=>setHelpPage(e, idx)}>{item.text}
+      </span>
+    });
 
     return (
       <div id="main">
@@ -69,7 +108,17 @@ class Main extends React.Component{
             {transform:this.state.helping?"translate(-50%, -50%)":"translate(-50%, -180%)",
             pointerEvents: this.state.helping?"auto":"none"}
           }>
-            <h1 id="helpingTitle">To get </h1>
+            <span id="helpPlatformBar">
+              {helpPagesButtons}
+              {/* <span className="helpPlatformBarItem" onClick={e=>setHelpPage(e, 0)}>Spotify</span>
+              <span className="helpPlatformBarItem" onClick={e=>setHelpPage(e, 1)}>Youtube</span>
+              <span className="helpPlatformBarItem" onClick={e=>setHelpPage(e, 2)}>Apple Music</span> */}
+              {/* first one has a 'underline' */}
+              <div id="helpPlatformBarSelector" style={{left:this.helpPageSelectorX+"px", width:this.helpPageSelectorW+"px"}}></div> 
+            </span>
+            <div id="helpOverlayContent">
+              <h1 id="helpingTitle">To get </h1>
+            </div>
           </div>
         </div>
         <header></header>
@@ -81,6 +130,7 @@ class Main extends React.Component{
             playlists={this.state.playlists}
             removePlaylist={this.removePlaylist}
             showHelp={toggleHelp}
+            highlightHelp={this.state.highlightingHelp}
           />
           {/* make selectedSongs later */}
           <SongsView
@@ -168,11 +218,11 @@ class Main extends React.Component{
 
   addPlaylist(id, platform){
     const newPLaylists = this.state.playlists.concat({id:id, platform:platform});
-    this.setState({playlists: newPLaylists});
+    this.setState({playlists: newPLaylists, highlightingHelp: false});
   }
 
   removePlaylist(id, platform){
-    // finds the index of the playlist with given id and platform and removes it
+    // findes the index of the playlist with given id and platform and removes it
     let idx = -1;
     for(let i = 0; i < this.state.playlists.length; i++){
       console.log(this.state.playlists[i], {id, platform})
@@ -403,7 +453,7 @@ class Main extends React.Component{
     if(filterType === "only"){
       console.log("filtering only")
       // any song that is in only one of the playlists
-
+      return []
     }
     else{ // any
       console.log("filtering any");

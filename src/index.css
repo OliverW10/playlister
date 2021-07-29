@@ -27,6 +27,7 @@ body{
     height: 89vh;
     background-color: inherit;
     bottom: 0px;
+    position: absolute;
 }
 
 #playlistViewContainer{
@@ -114,7 +115,8 @@ header{
     background-color: #c4c4c4;
     margin: 2%;
     padding: 2%;
-    box-shadow: 1px 5px 6px #888;
+    box-shadow: 3px 5px 7px rgba(40, 40, 40, 0.45); 
+    /* #888 */
     display: inline-flex;
     width: 38vw;
     margin-left: 3%;
@@ -128,6 +130,11 @@ header{
 .playlistItemImage{
     width: 100px;
     height: 100px;
+    transition: filter 0.5s;
+}
+
+.playlistItemImage:hover{
+    filter: brightness(70%);
 }
 
 .playlistItemTitle{
@@ -150,7 +157,7 @@ header{
     transition: opacity 0.5s;
     border: 0px;
     /* border-radius: 5px; */
-    background-color: rgba(0, 0, 0,0 );
+    background-color: rgba(0, 0, 0, 0);
     padding: 0;
     width: 25px;
     height: 25px;
@@ -176,25 +183,29 @@ header{
 .playlistItemExtra{
     position: relative;
     background-color: #888;
-    /* top: -20px; */
+    top: -1em;
     margin: 5%;
     margin-top: 0px;
+    margin-bottom: 0px;
     z-index: -1;
-    right: 10px;
-    animation-name: slideInInfo;
-    animation-duration: 1s;
-    /* animation-iteration-count: 1; */
+    height: 200px;
+    width: 36vw;
+    left: 1vw;
+    overflow: hidden;
+    box-shadow: 1px 3px 10px rgba(0, 0, 0, 0.3);
+
+    transition: max-height ease-in-out;
+    transition-duration: 0.5s;
 }
 
-@keyframes slideInInfo{
-    from{
-        /* transform: translateY(-50px); */
-        margin-top: -50px;
-    }
-    to{
-        /* transform: translateY(50px); */
-        margin-top: 0px;
-    }
+.playlistItemExtraInner{
+    position: absolute;
+    bottom: 0;
+    height: 50px
+}
+
+.playlistItemText{
+    /* margin: 0; */
 }
 
 
@@ -389,10 +400,15 @@ header{
     width: 100vw;
     height: 100vh;
     background-color: black;
-    opacity: 0.4;
+    opacity: 0.5;
     z-index: 3;
 
-    transition: opacity 1s;
+    transition: opacity 0.4s;
+}
+
+#darkOverlayBackground:hover{
+    /* transition: opacity 0.1s; */
+    opacity: 0.3 !important;
 }
 
 #darkOverlay{
@@ -410,8 +426,6 @@ header{
     transition: transform 1s;
     /* animation-name: exportSlideIn;
     animation-duration: 1s; */
-
-    padding: 50px;
 }
 @keyframes exportSlideIn{
     from{transform: translate(-50%, -150%);}
@@ -468,16 +482,37 @@ header{
 
 #playlistHelp{
     position: absolute;
-    top: -30px;
+    top: -2em;
     left: 4%;
     color: #ccc;
     transition: color 0.1s ease;
     cursor: pointer;
-    text-decoration: underline
+    text-decoration: underline;
+    transition: color 2s;
+    transition: font-size 2s;
+}
+
+.playlistHelpHighlight{
+    /* font-size: 150%; */
+    animation-name: flashHelp;
+    animation-duration: 0.9s;
+    animation-iteration-count: infinite;
+}
+
+@keyframes flashHelp{
+    0% {
+        color: #ccc;
+    }
+    60% {
+        color: #333;
+    }
+    100% {
+        color: #ccc;
+    }
 }
 
 #playlistHelp:hover{
-    color: #999;
+    color: #777 !important;
 }
 
 #playlistSearchContainer:hover #playlistHelp{
@@ -487,4 +522,51 @@ header{
 #helpingTitle{
     color: white;
     font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+#helpPlatformBar{
+    display: flex;
+    margin: 0;
+    width: 100%;
+    background-color: #111;
+    justify-content: space-around;
+    /* overflow: hidden; */
+}
+
+.helpPlatformBarItem{
+    color: #aaa;
+    flex-grow: 1;
+    padding: 1em;
+    background-color: #222;
+    margin: 0;
+    margin-right: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 1s;
+}
+
+.helpPlatformBarItem:hover{
+    background-color: #353535 !important;
+    color: #fff
+}
+
+#helpOverlayContent{
+    padding: 50px;
+    overflow: hidden;
+    position: relative;
+    transition: left 1s;
+}
+
+#helpPlatformBarSelector{
+    top: 2.7em;
+    height: 0.3em;
+    position: absolute;
+    /* display: inline-block; */
+    transition: all 1s;
+    background-color: #ddd;
+}
+
+.helpPlatformBarButtonSelected{
+    background-color: #333;
 }
