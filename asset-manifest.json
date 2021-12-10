@@ -1,20 +1,20 @@
 {
   "files": {
-    "main.css": "/playlister/static/css/main.6eb3f5f2.chunk.css",
-    "main.js": "/playlister/static/js/main.899c1bd9.chunk.js",
-    "main.js.map": "/playlister/static/js/main.899c1bd9.chunk.js.map",
+    "main.css": "/playlister/static/css/main.23d6cbd8.chunk.css",
+    "main.js": "/playlister/static/js/main.4bbbf7ae.chunk.js",
+    "main.js.map": "/playlister/static/js/main.4bbbf7ae.chunk.js.map",
     "runtime-main.js": "/playlister/static/js/runtime-main.6d45f0a6.js",
     "runtime-main.js.map": "/playlister/static/js/runtime-main.6d45f0a6.js.map",
-    "static/js/2.ff397cbe.chunk.js": "/playlister/static/js/2.ff397cbe.chunk.js",
-    "static/js/2.ff397cbe.chunk.js.map": "/playlister/static/js/2.ff397cbe.chunk.js.map",
+    "static/js/2.77eacf02.chunk.js": "/playlister/static/js/2.77eacf02.chunk.js",
+    "static/js/2.77eacf02.chunk.js.map": "/playlister/static/js/2.77eacf02.chunk.js.map",
     "index.html": "/playlister/index.html",
-    "static/css/main.6eb3f5f2.chunk.css.map": "/playlister/static/css/main.6eb3f5f2.chunk.css.map",
-    "static/js/2.ff397cbe.chunk.js.LICENSE.txt": "/playlister/static/js/2.ff397cbe.chunk.js.LICENSE.txt"
+    "static/css/main.23d6cbd8.chunk.css.map": "/playlister/static/css/main.23d6cbd8.chunk.css.map",
+    "static/js/2.77eacf02.chunk.js.LICENSE.txt": "/playlister/static/js/2.77eacf02.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.6d45f0a6.js",
-    "static/js/2.ff397cbe.chunk.js",
-    "static/css/main.6eb3f5f2.chunk.css",
-    "static/js/main.899c1bd9.chunk.js"
+    "static/js/2.77eacf02.chunk.js",
+    "static/css/main.23d6cbd8.chunk.css",
+    "static/js/main.4bbbf7ae.chunk.js"
   ]
 }
