@@ -5,7 +5,8 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import SongsView from './SongsView.js';
 import PlaylistsView from './PlaylistsView.js';
-import { serverUrl, getQueryVariable, parseName, paramify } from './utilities.js';
+import { serverUrl, getQueryVariable, parseName, paramify, getImageColour, shuffleArray } from './utilities.js';
+import colorsys from 'colorsys';
 const axios = require('axios'); // dont know difference between require and import
 
 Scrollbar.use(OverscrollPlugin);
@@ -29,7 +30,7 @@ class Main extends React.Component{
       allSongs: {},
       playlists: Array(0),
       exporting:this.exporting,
-      mergeType:"Any",
+      sortType: "hue",
       helping:false,
       highlightingHelp:false,
       helpPage:0,
@@ -53,14 +54,12 @@ class Main extends React.Component{
     this.removePlaylist = this.removePlaylist.bind(this);
     this.export = this.export.bind(this);
     this.authorize = this.authorize.bind(this);
-    this.convertPlaylist = this.convertPlaylist.bind(this);
-    this.convertSong = this.convertSong.bind(this);
   }
 
   render(){
 
-    // callback used by SongsView to set the merge type state
-    const setMergeType = type=>{this.setState({mergeType:type})}
+    // callback used by SongsView to set the sort type state
+    const setSortType = type=>{this.setState({sortType:type})}
 
     const toggleHelp = ()=>{this.setState({helping:!this.state.helping, highlightingHelp:false})};
 
@@ -71,18 +70,17 @@ class Main extends React.Component{
     };
 
     const helpPagesButtonInfo = [
-      {text:"Spotify"},
-      {text:"Youtube"},
-      {text:"Apple Music"},
+      {text:"Playlist Link"},
+      {text:"Sort Type"},
+      {text:"Exporting"},
     ]
     const helpPagesButtons = helpPagesButtonInfo.map((item, idx)=>{
       let classNames = "helpPlatformBarItem noselect "
-      if(idx == this.state.helpPage){
+      if(idx === this.state.helpPage){
         classNames += "helpPlatformBarButtonSelected"
       }
       return <span
         key={idx}
-        // style={{backgroundColor:(idx===this.state.helpPage)?"#333":"#222"}}
         className={classNames}
         onClick={e=>setHelpPage(e, idx)}>{item.text}
       </span>
@@ -104,10 +102,10 @@ class Main extends React.Component{
             onClick={toggleHelp}
             style={{opacity:this.state.helping?0.4:0, pointerEvents: this.state.helping?"auto":"none"}}>
           </div>
-          <div id="darkOverlay" style={
-            {transform:this.state.helping?"translate(-50%, -50%)":"translate(-50%, -180%)",
-            pointerEvents: this.state.helping?"auto":"none"}
-          }>
+          <div id="darkOverlay" style={{
+            transform:this.state.helping?"translate(-50%, -50%)":"translate(-50%, -180%)",
+            pointerEvents: this.state.helping?"auto":"none"
+          }}>
             <span id="helpPlatformBar">
               {helpPagesButtons}
               {/* <span className="helpPlatformBarItem" onClick={e=>setHelpPage(e, 0)}>Spotify</span>
@@ -123,7 +121,6 @@ class Main extends React.Component{
         </div>
         <header></header>
         <div id="content">
-
           <PlaylistsView
             addPlaylist={this.addPlaylist}
             sendSongs={this.addSongs}
@@ -132,13 +129,11 @@ class Main extends React.Component{
             showHelp={toggleHelp}
             highlightHelp={this.state.highlightingHelp}
           />
-          {/* make selectedSongs later */}
           <SongsView
-            songs={this.filterSongs(this.state.allSongs, this.state.mergeType)}
+            songs={this.sortSongs(this.state.allSongs, this.state.sortType)}
             export={this.authorize}
-            changeMergeType={setMergeType}
+            changeSortType={setSortType}
           />
-
           <hr id="midBreak"></hr>
         </div>
       </div>
@@ -158,8 +153,11 @@ class Main extends React.Component{
       const newTracks = prevRes.items.map((val, idx) => {
         return Object.assign(val, {playlistId:id, platform:platform})
       })
+      await this.addColours(newTracks)
       let key = platform.toString()+id.toString();
       let newSongs = {...this.state.allSongs};
+      console.log(this.state.allSongs);
+      console.log(newSongs);
       if(key in newSongs){
         newSongs[key] = newSongs[key].concat(newTracks)
       }else{
@@ -188,59 +186,29 @@ class Main extends React.Component{
       });
       await this.addSongs(res.data, platform, id);
     }
-    if(platform === "youtube"){
-      let paramsObj = {
-        part:"snippet",
-        maxResults:50,
-        playlistId:id,
-      }
-
-      if(prevRes){ // dont do for first request
-        if(prevRes.nextPageToken){
-          paramsObj.pageToken = prevRes.nextPageToken;
-        }
-      }
-
-      // do a request if either there wasnt a previose request (prevRes is null)
-      // or there is a nextPageToken from the last request
-      if(paramsObj.pageToken || !(prevRes)){
-        let res = await axios.get(`${serverUrl}/youtube/`, {
-          params: {
-            endpoint:"playlistItems",
-            query:JSON.stringify(paramsObj)
-          }
-        })
-        await this.addSongs(res.data, platform, id)
-      }
-    }
     return this.state.allSongs;
   }
 
   addPlaylist(id, platform){
-    const newPLaylists = this.state.playlists.concat({id:id, platform:platform});
-    this.setState({playlists: newPLaylists, highlightingHelp: false});
+    const newPlaylists = this.state.playlists.concat({id:id, platform:platform});
+    this.setState({playlists: newPlaylists, highlightingHelp: false});
   }
 
   removePlaylist(id, platform){
     // findes the index of the playlist with given id and platform and removes it
-    let idx = -1;
-    for(let i = 0; i < this.state.playlists.length; i++){
-      console.log(this.state.playlists[i], {id, platform})
-      if(this.state.playlists[i].id === id && this.state.playlists[i].platform === platform){
-        console.log("found match");
-        idx = i;
-      }
-    }
-    if(idx === -1){
+    let start_len = this.state.playlists.length
+    let newPlaylists = [...this.state.playlists]
+    newPlaylists.filter(playlist=>playlist.id!=id||playlist.platform!=platform)
+    if(this.state.playlists.length == start_len){
       console.log("invalid id to remove");
       return;
     }
-    const newPLaylists = [...this.state.playlists.slice(0, idx), ...this.state.playlists.slice(idx+1)];
     // const newSongs = this.state.allSongs.filter( s=> !(s.playlistId===id && s.platform===platform) );
     const key = platform.toString()+id.toString()
-    const { [key]: _, ...newSongs } = this.state.allSongs;
+    let newSongs = {...this.state.allSongs}
+    delete newSongs[key]
     console.log(newSongs.length);
-    this.setState({playlists:newPLaylists, allSongs:newSongs});
+    this.setState({playlists:newPlaylists, allSongs:newSongs});
   }
 
   // first step of exporting, redirects to spotify, gives a url to return to
@@ -251,11 +219,11 @@ class Main extends React.Component{
     console.log(urlParams);
     if(platform === "spotify"){
       const paramsObj = {
-        client_id:'e9901c5f654f4f58abb0d07a723dfd30',
-        response_type:'token',
-        redirect_uri:window.location.origin,
-        state:JSON.stringify({exporting:"spotify", playlists:this.state.playlists, mergeType:this.state.mergeType}),
-        scope:"playlist-modify-private playlist-modify-public",
+        client_id:      'e9901c5f654f4f58abb0d07a723dfd30',
+        response_type:  'token',
+        redirect_uri:   window.location.origin,
+        state:          JSON.stringify({exporting:"spotify", playlists:this.state.playlists, sortType:this.state.sortType}),
+        scope:          "playlist-modify-private playlist-modify-public",
       }
       const paramsStr = paramify(paramsObj);
       window.location.href = "https://accounts.spotify.com/authorize"+paramsStr;
@@ -264,205 +232,132 @@ class Main extends React.Component{
 
   // called after the return from spotify auth
   async export(params){
-
     // called when there are hash or querey parameters to export a playlist
-    if(getQueryVariable(params, "access_token")){ // means its spotify
-      this.exporting = "spotify"
-      console.log("sending spotify playlist");
-      let state = JSON.parse(getQueryVariable(params, "state"));
-      const access_token = getQueryVariable(params, "access_token");
-      console.log(state);
-      
-      // get the user id
-      const meRes = await axios.get(
-        "https://api.spotify.com/v1/me",
-        {
-          headers:{
-            Authorization:`Bearer ${access_token}`
+    this.exporting = "spotify"
+    console.log("sending spotify playlist");
+    let state = JSON.parse(getQueryVariable(params, "state"));
+    const access_token = getQueryVariable(params, "access_token");
+    console.log(state);
+    
+    // get the user id
+    const meRes = await axios.get(
+      "https://api.spotify.com/v1/me",
+      {
+        headers:{
+          Authorization:`Bearer ${access_token}`
+        }
+    });
+    const myId = meRes.data.id
+    console.log(meRes);
+    
+    // create the playlist
+    let createRes = null;
+    if(EXPORT_SAFE){
+      try{
+        createRes = await axios({
+          method: 'post',
+          url: `https://api.spotify.com/v1/users/${myId}/playlists`,
+          headers: {
+            Authorization:`Bearer ${access_token}`,
+            "Content-Type":"application/json",
+          }, 
+          data: {
+            name:"New Playlister Playlist",
+            description:"An awsome playlist created with playlister"
           }
         });
-      console.log(meRes);
-      
-      // create the playlist
-      let createRes = null;
-      if(EXPORT_SAFE){
-        try{
-          createRes = await axios({
-            method: 'post',
-            url: `https://api.spotify.com/v1/users/${meRes.data.id}/playlists`,
-            headers: {
-              Authorization:`Bearer ${access_token}`,
-              "Content-Type":"application/json",
-            }, 
-            data: {
-              name:"New Playlister Playlist",
-              description:"An awsome playlist created with playlister"
-            }
-          });
-          console.log(createRes);
-        }catch(error){
-          console.log(error);
-          return;
-        }
-      }
-
-      // for each playlist convert it from [{id, platform}] to [spotifyUri]
-      // then sends them to spotify
-      for(let i=0; i<state.playlists.length;i++){
-        const playlistSongs = await this.convertPlaylist(state.playlists[i], "spotify");
-        console.log(playlistSongs);
-
-        // goes through songs 100 at a time
-        for(let page=0; page < Math.ceil(playlistSongs.length/100); page++){
-          const pageSongs = playlistSongs.slice(page*100, (page+1)*100)
-          // adds to final playlist
-          if(EXPORT_SAFE){
-            try{
-              const addRes = await axios({
-                method: 'post',
-                url: `https://api.spotify.com/v1/playlists/${createRes.data.id}/tracks`,
-                headers: {
-                  Authorization:`Bearer ${access_token}`,
-                  "Content-Type":"application/json",
-                }, 
-                data: JSON.stringify({
-                  uris:pageSongs
-                })
-              });
-              console.log(addRes);
-            }catch(error){
-              console.log(error);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  async convertPlaylist(playlist, toPlatform){
-    // takes in a playlist {id, platform} and a desired platform
-    // returns ids for all the songs for desired platform
-
-    console.log(`converting ${playlist.id} from ${playlist.platform} to ${toPlatform}`)
-    
-    // uses addSongs beacuse it fetches all the songs already
-    await this.addSongs(null, playlist.platform, playlist.id);
-    // filter allSongs to just the playlist songs
-    // then call convertSong on each song
-    const allSongs = this.state.allSongs;
-    console.log(allSongs);
-    const theseSongs = allSongs.filter(song=>song.playlistId===playlist.id&&song.platform===playlist.platform);
-    console.log(theseSongs);
-    const convertedSongsPromises = theseSongs.map(song=>this.convertSong(song, toPlatform).catch(error=>{return error}));
-    const convertedSongs = await Promise.all(convertedSongsPromises);
-    console.log(convertedSongs);
-    // get uris/ids out of song returned song objects
-    let songsIds = []
-    for(let s=0; s<convertedSongs.length;s++){
-      try{
-        if(toPlatform === "spotify"){
-          songsIds.push(convertedSongs[s].track.uri)
-        }
+        console.log(createRes);
       }catch(error){
         console.log(error);
-        console.log(`Could add #${s} ${theseSongs[s]}`)
+        return;
       }
     }
 
-    return songsIds;
-  }
+    // for each playlist convert it from [{id, platform}] to [spotifyUri]
+    // then sends them to spotify
+    for(let i=0; i<state.playlists.length;i++){
+      const playlistSongs = state.playlists[i];
+      console.log(playlistSongs);
 
-  convertSong(song, toPlatform){
-    // takes a song {playlistId, platform + any info from song}
-    // finds it on toPlatform, returns a promise to the song on the new platform
-    // console.log(song);
-    if(toPlatform === "spotify"){
-      if(song.platform === toPlatform){
-        return new Promise((resolve, reject)=>{resolve(song)});
-      }
-      // uses the search feature too search for the song title
-      if(song.platform === "youtube"){
-        let songName = parseName(song.snippet.title)[0].replace(/\s/g, "+");
-        return axios.get(`${serverUrl}/spotify/`, {
-          params:{
-            endpoint:`search?q=${songName}&type=track&limit=1`
-          }
-        }).then(res=>res.data.tracks.items[0].track);
-        // const outSong = res.data?.tracks?.items[0]
-      }
-    }
-    throw new Error("Not implimted");
-  }
-
-  // filters song according to merge type
-  // takes all the songs as obj with keys per playlist
-  filterSongs(allSongs, _filterType){
-    let filterType = _filterType.toLowerCase()
-
-    // helper to get id out of a song object (beacuse its different for different platforms)
-    const getSongId = (song)=>{
-      if(song.platform === "spotify"){
-        return song.track.id
-      }else if(song.platform === "youtube"){
-        return song.etag
-      }
-    }
-    // dosent consider cross platformness (yet)
-    if(filterType === "all"){
-      // any song that is in all the playlists
-      console.log("filtering all")
-
-      // combine all songs into one array
-      let songs = [];
-      for(let key in allSongs){
-        songs = songs.concat(allSongs[key])
-      }
-      // get ids
-      const allSongIds = songs.map(getSongId);
-      // removes duplicates
-      const singleSongIds = [...new Set(allSongIds)];
-      console.log(singleSongIds);
-      // finds ids that appear in every playlist
-      let songIds = []
-      let id;
-      for(let i=0; i<singleSongIds.length; i++){
-        id = singleSongIds[i];
-        if(allSongIds.filter(x => x === id).length >= Object.keys(allSongs).length){
-          songIds.push(id);
-        }
-      }
-
-      console.log(songIds);
-      // gets back songs from ids
-      let retSongs = []
-      // for each id
-      for(let i=0; i<songIds.length; i++){
-        // go through all the songs
-        for(let j=0; j<songs.length; j++){
-          let s = songs[j]
-          // untill you find one with the same id
-          if(getSongId(s) === songIds[i]){
-            retSongs.push(s);
-            break
+      // goes through songs 100 at a time
+      for(let page=0; page < Math.ceil(playlistSongs.length/100); page++){
+        const pageSongs = playlistSongs.slice(page*100, (page+1)*100)
+        // adds to final playlist
+        if(EXPORT_SAFE){
+          try{
+            const addRes = await axios({
+              method: 'post',
+              url: `https://api.spotify.com/v1/playlists/${createRes.data.id}/tracks`,
+              headers: {
+                Authorization:`Bearer ${access_token}`,
+                "Content-Type":"application/json",
+              }, 
+              data: JSON.stringify({
+                uris:pageSongs
+              })
+            });
+            console.log(addRes);
+          }catch(error){
+            console.log(error);
           }
         }
       }
-      console.log(retSongs);
-      return retSongs;
     }
-    if(filterType === "only"){
-      console.log("filtering only")
-      // any song that is in only one of the playlists
-      return []
-    }
-    else{ // any
-      console.log("filtering any");
-      // any song that is in any number of playlists
-      let songs = [];
-      for(var key in allSongs) {
-        songs = songs.concat(allSongs[key]);
+  }
+
+  // takes list of song objects and adds colour values to each 
+  async addColours(songs){
+    for(let song of songs){
+      if(!("hue" in song)){
+        let rgb;
+        try{
+          rgb = await getImageColour(song.track.album.images[2].url)
+        }catch(e){
+          rgb = [40, 40, 40];
+        }
+        const hsl = colorsys.rgb_to_hsv({r: rgb[0], g: rgb[1], b: rgb[2] })
+        // console.log(`hsl: ${hsl.h}, ${hsl.s}, ${hsl.v}  r,g,b: ${rgb[0]},${rgb[1]},${rgb[2]}`);
+        song["hue"] = hsl.h
+        song["sat"] = hsl.s
+        song["val"] = hsl.v
+        // fixes issues wth black and white images
+        if(song.sat < 10 || song.val < 10 || song.val > 90){
+            song.hue = Math.round(95-song.val*0.05)
+        }
       }
-      return songs;
+    }
+  }
+
+  sortSongs(allSongs, sortType){
+    let songs = []
+    for(let key of Object.keys(allSongs)){
+      songs = songs.concat(allSongs[key])
+    }
+    // console.log(songs);
+    if(sortType.toLowerCase() === "hue"){
+      return songs.sort((a, b)=>{
+        if(!("hue" in a)){
+            return 1
+        }
+        if(!("hue" in b)){
+            return -1
+        }
+        return a.hue - b.hue
+      })
+    }
+    if(sortType.toLowerCase() === "val"){
+        return songs.sort((a, b)=>{
+            if(!("val" in a)){
+                return 1
+            }
+            if(!("val" in b)){
+                return -1
+            }
+            return a.val - b.val
+        })
+    }
+    if(sortType.toLowerCase() === "rand"){
+        return shuffleArray(songs)
     }
   }
 }

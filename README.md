@@ -1,9 +1,9 @@
 # playlister
 
-A web-app to combine spotify playlists in interesting ways
+A web-app to sort the songs in a spotify playlist by the colour of their thumbnail image
 
 
-was originally intened to convert playlists between platforms
+was originally intened to convert playlists between platforms and combine them
 but there are already websites to do that (e.g. [1](https://www.tunemymusic.com/) [2](https://soundiiz.com/))
 
-https://create-react-app.dev/docs/deployment/
+Created with: https://create-react-app.dev/docs/deployment/

@@ -176,8 +176,7 @@ header{
 }
 
 .playlistItemRemove:hover .playlistItemCloseImg{
-    width: 20px;
-    height: 20px;
+    transform: scale(0.8);
 }
 
 .playlistItemExtra{
@@ -495,7 +494,7 @@ header{
 .playlistHelpHighlight{
     /* font-size: 150%; */
     animation-name: flashHelp;
-    animation-duration: 0.9s;
+    animation-duration: 1s;
     animation-iteration-count: infinite;
 }
 
@@ -543,12 +542,15 @@ header{
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: background-color 1s;
+    transition: background-color 0.3s;
 }
 
 .helpPlatformBarItem:hover{
     background-color: #353535 !important;
     color: #fff
+}
+.helpPlatformBarItem:active{
+    filter: brightness(130%);
 }
 
 #helpOverlayContent{
@@ -563,7 +565,7 @@ header{
     height: 0.3em;
     position: absolute;
     /* display: inline-block; */
-    transition: all 1s;
+    transition: all 0.8s;
     background-color: #ddd;
 }
 

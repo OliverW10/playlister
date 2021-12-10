@@ -48,17 +48,17 @@ class ExportButton extends React.Component{
   }
 }
 
-class SongItem extends React.Component{
-  render(){
-    console.log("renderd songItem")
-    return (
+function SongItem(props) {
+  return (
+    <div className="songItemExtra">
       <div className="songItem">
-        <img alt="" src={this.props.img} className="songItemImg"></img>
-        <h3 className="songItemTitle">{parseName(this.props.name)[0]}</h3>
-        <p className="songItemArtists">{this.props.artists}</p>    
+        <img alt="" src={props.img} className="songItemImg"></img>
+        <h3 className="songItemTitle">{parseName(props.name)[0]}</h3>
+        <p className="songItemArtists">{props.artists}</p>
+        <span style={{minWidth:"20px", color:props.col}}>██</span>
       </div>
-    );
-  }
+    </div>
+  )
 }
 
 class SongsView extends React.Component{
@@ -85,6 +85,7 @@ class SongsView extends React.Component{
           name={val.track.name}
           img={imgUrl}
           artists={val.track.artists.map((x)=>x.name).join(", ")}
+          col={`hsl(${val.hue}, ${val.sat}%, ${val.val}%)`}
         />
       }
       if(val.platform === "youtube"){
@@ -114,9 +115,9 @@ class SongsView extends React.Component{
           </div>
 
           <div id="songsTopBarType">
-            <MergeTypeRadio text="All"  type="all"  onClick={this.props.changeMergeType} helpText={mergeHelp.all}/>
-            <MergeTypeRadio text="Only" type="only" onClick={this.props.changeMergeType} helpText={mergeHelp.only}/>
-            <MergeTypeRadio text="Any"  type="any"  onClick={this.props.changeMergeType} helpText={mergeHelp.any}/>
+            <MergeTypeRadio text="Hue"  type="hue"  onClick={this.props.changeSortType} helpText={mergeHelp.all}/>
+            <MergeTypeRadio text="val" type="val" onClick={this.props.changeSortType} helpText={mergeHelp.only}/>
+            <MergeTypeRadio text="oangfaso"  type="rand"  onClick={this.props.changeSortType} helpText={mergeHelp.any}/>
           </div>
         </div>
         <div id="songsContainer">
@@ -125,16 +126,15 @@ class SongsView extends React.Component{
 
         <div id="songsExport">
           <ExportButton export={this.props.export} text="Spotify" platform="spotify" />
-          <ExportButton export={this.props.export} text="Youtube" platform="youtube" disabled={true} />
+          {/* <ExportButton export={this.props.export} text="Youtube" platform="youtube" disabled={true} />
           <ExportButton export={this.props.export} text="Apple Music" platform="apple" disabled={true} />
-          <ExportButton export={this.props.export} text="Download" platform="download" disabled={false} />
+          <ExportButton export={this.props.export} text="Download" platform="download" disabled={false} /> */}
         </div>
 
       </div>
     )
   }
   componentDidUpdate(){
-    console.log("added scroll")
     Scrollbar.init(
       document.getElementById('songsContainer'), {
       plugins: {

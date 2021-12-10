@@ -95,6 +95,52 @@ const overscrollOptions = {
   glowColor: '#222a2d',
 };
 
+const c = document.createElement("canvas");
+var ctx = c.getContext("2d");
+
+var canvasLock = false;
+
+// https://www.w3schools.com/tags/canvas_getimagedata.asp
+async function getImageColour(imageUrl){
+  return new Promise((resolve, reject)=>{
+    let img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = ()=>{
+      // waits until the canvas isnt being used
+      // while(canvasLock == true){}
+      canvasLock = true;
+      ctx.clearRect(0, 0, c.width, c.height)
+      ctx.drawImage(img, 0, 0);
+      let imgData = ctx.getImageData(0, 0, c.width, c.height);
+      canvasLock = false;
+
+      let avgR = 0
+      let avgG = 0
+      let avgB = 0
+      let total = 0
+      for (let i = 0; i < imgData.data.length; i += 4) {
+        // weights colour by its transparency
+        const alpha = imgData.data[i+3];
+        total += alpha
+        avgR += imgData.data[i] * alpha
+        avgG += imgData.data[i + 1] * alpha
+        avgB += imgData.data[i + 2] * alpha
+      }
+      resolve([avgR/total, avgG/total, avgB/total]);
+    };
+    img.onerror = reject
+    img.src = imageUrl
+    img.crossOrigin = "Anonymous";
+  })
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
 export {
   sanitizeString,
   parseName,
@@ -102,5 +148,7 @@ export {
   getQueryVariable,
   paramify,
   overscrollOptions,
-  scrollOptions
+  scrollOptions,
+  getImageColour,
+  shuffleArray
 }
